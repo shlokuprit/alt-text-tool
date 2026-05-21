@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAltText } from "@/lib/gemini";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { decrementCredits, getOrInitCredits } from "@/lib/credits";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -16,9 +18,28 @@ const ALLOWED_TYPES = new Set([
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Sign in to use the tool" }, { status: 401 });
+    }
+
+    const state = await getOrInitCredits(user.id);
+    if (state.credits_remaining <= 0) {
+      return NextResponse.json(
+        {
+          error: "Daily free limit reached. Credits refill at 00:00 UTC.",
+          creditsRemaining: 0,
+        },
+        { status: 429 },
+      );
+    }
+
     const form = await req.formData();
     const file = form.get("image");
-
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "No image uploaded" }, { status: 400 });
     }
@@ -39,11 +60,11 @@ export async function POST(req: NextRequest) {
     const base64 = buf.toString("base64");
     const altText = await generateAltText(base64, file.type);
 
-    return NextResponse.json({ altText });
+    const creditsRemaining = await decrementCredits(user.id);
+    return NextResponse.json({ altText, creditsRemaining });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Generation failed";
     console.error("generate error:", err);
-    const status = message.includes("API key") ? 500 : 502;
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }
