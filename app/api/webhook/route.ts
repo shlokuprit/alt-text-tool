@@ -34,15 +34,30 @@ export async function POST(req: NextRequest) {
 
   let event: PolarEvent;
   try {
-    const wh = new Webhook(secret);
+    const cleaned = secret.trim();
+    const wh = new Webhook(cleaned);
     event = wh.verify(body, headers) as PolarEvent;
   } catch (err) {
     if (err instanceof WebhookVerificationError) {
-      console.error("webhook signature verification failed:", err.message);
+      console.error("WEBHOOK signature verification failed:", err.message);
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
-    console.error("webhook unexpected error:", err);
-    return NextResponse.json({ error: "Webhook error" }, { status: 400 });
+    const errName = err instanceof Error ? err.name : "unknown";
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("WEBHOOK constructor or verify failed:", {
+      errName,
+      errMsg,
+      secretLen: secret.length,
+      secretPrefix: secret.slice(0, 7),
+      bodyLen: body.length,
+      hasId: !!headers["webhook-id"],
+      hasSig: !!headers["webhook-signature"],
+      hasTs: !!headers["webhook-timestamp"],
+    });
+    return NextResponse.json(
+      { error: "Webhook error", detail: errMsg },
+      { status: 400 },
+    );
   }
 
   if (event.type !== "order.paid") {
