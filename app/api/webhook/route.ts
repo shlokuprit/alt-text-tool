@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Webhook, WebhookVerificationError } from "standardwebhooks";
+import {
+  validateEvent,
+  WebhookVerificationError,
+} from "@polar-sh/sdk/webhooks.js";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
-type PolarOrderPaidEvent = {
+type PolarOrderPaidLike = {
   type: "order.paid";
   data: {
     id: string;
@@ -14,10 +17,6 @@ type PolarOrderPaidEvent = {
   };
 };
 
-type PolarEvent =
-  | PolarOrderPaidEvent
-  | { type: string; data: { id?: string } & Record<string, unknown> };
-
 export async function POST(req: NextRequest) {
   const secret = process.env.POLAR_WEBHOOK_SECRET;
   if (!secret) {
@@ -26,38 +25,29 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.text();
-  const headers = {
-    "webhook-id": req.headers.get("webhook-id") ?? "",
-    "webhook-timestamp": req.headers.get("webhook-timestamp") ?? "",
-    "webhook-signature": req.headers.get("webhook-signature") ?? "",
-  };
+  const headers: Record<string, string> = {};
+  req.headers.forEach((value, key) => {
+    headers[key.toLowerCase()] = value;
+  });
 
-  let event: PolarEvent;
+  let event;
   try {
-    // Polar uses the raw secret string as HMAC key bytes (verified against
-    // @polar-sh/sdk's validateEvent helper). The standardwebhooks library's
-    // Webhook constructor expects a base64-encoded secret which it decodes
-    // back, so we double-wrap: utf-8 secret -> base64 string -> Webhook.
-    const base64Secret = Buffer.from(secret.trim(), "utf-8").toString("base64");
-    const wh = new Webhook(base64Secret);
-    event = wh.verify(body, headers) as PolarEvent;
+    event = validateEvent(body, headers, secret.trim());
   } catch (err) {
     if (err instanceof WebhookVerificationError) {
-      console.error("WEBHOOK signature verification failed:", err.message);
+      console.error("WEBHOOK signature verification failed:", {
+        msg: err.message,
+        secretLen: secret.length,
+        secretPrefix: secret.slice(0, 10),
+        bodyLen: body.length,
+        webhookId: headers["webhook-id"],
+        webhookSig: headers["webhook-signature"]?.slice(0, 20),
+        webhookTs: headers["webhook-timestamp"],
+      });
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
-    const errName = err instanceof Error ? err.name : "unknown";
     const errMsg = err instanceof Error ? err.message : String(err);
-    console.error("WEBHOOK constructor or verify failed:", {
-      errName,
-      errMsg,
-      secretLen: secret.length,
-      secretPrefix: secret.slice(0, 7),
-      bodyLen: body.length,
-      hasId: !!headers["webhook-id"],
-      hasSig: !!headers["webhook-signature"],
-      hasTs: !!headers["webhook-timestamp"],
-    });
+    console.error("WEBHOOK parse/other error:", errMsg);
     return NextResponse.json(
       { error: "Webhook error", detail: errMsg },
       { status: 400 },
@@ -68,7 +58,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true, ignored: event.type });
   }
 
-  const order = (event as PolarOrderPaidEvent).data;
+  const order = (event as unknown as PolarOrderPaidLike).data;
   const eventId = headers["webhook-id"] || `order:${order.id}`;
   const metadataUserId =
     typeof order.metadata?.user_id === "string"
