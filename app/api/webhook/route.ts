@@ -34,8 +34,17 @@ export async function POST(req: NextRequest) {
 
   let event: PolarEvent;
   try {
-    const cleaned = secret.trim();
-    const wh = new Webhook(cleaned);
+    let cleaned = secret.trim();
+    // Polar emits secrets with the polar_whs_ prefix; standardwebhooks
+    // only strips its own whsec_ prefix. Normalise here.
+    for (const p of ["polar_whsec_", "polar_whs_", "whsec_"]) {
+      if (cleaned.startsWith(p)) {
+        cleaned = cleaned.slice(p.length);
+        break;
+      }
+    }
+    const keyBytes = new Uint8Array(Buffer.from(cleaned, "base64"));
+    const wh = new Webhook(keyBytes, { format: "raw" });
     event = wh.verify(body, headers) as PolarEvent;
   } catch (err) {
     if (err instanceof WebhookVerificationError) {
