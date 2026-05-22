@@ -111,19 +111,41 @@ export default async function Home({
 
         <Faq />
 
-        <footer className="mt-16 pt-8 border-t border-zinc-200 dark:border-zinc-800 text-center text-xs text-zinc-500">
-          <p>Powered by Gemini 2.5 Flash &middot; built with Next.js</p>
-          <p className="mt-2">
-            Built by{" "}
-            <a
-              href="https://github.com/shlokuprit"
-              className="hover:text-zinc-900 dark:hover:text-zinc-100"
-              target="_blank"
-              rel="noopener"
-            >
-              @shlokuprit
-            </a>
-          </p>
+        <footer className="mt-16 pt-8 border-t border-zinc-200 dark:border-zinc-800 text-xs text-zinc-500">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p>
+              Built by{" "}
+              <a
+                href="https://github.com/shlokuprit"
+                className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                target="_blank"
+                rel="noopener"
+              >
+                @shlokuprit
+              </a>{" "}
+              &middot; Powered by Gemini 2.5 Flash
+            </p>
+            <nav className="flex gap-4">
+              <a
+                href="/privacy"
+                className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              >
+                Privacy
+              </a>
+              <a
+                href="/terms"
+                className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              >
+                Terms
+              </a>
+              <a
+                href="/contact"
+                className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              >
+                Contact
+              </a>
+            </nav>
+          </div>
         </footer>
       </main>
     </div>

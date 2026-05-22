@@ -151,7 +151,7 @@ export function UploadTool({
           <button
             onClick={buyCredits}
             disabled={buying}
-            className="text-zinc-700 dark:text-zinc-300 hover:underline disabled:opacity-50"
+            className="text-zinc-700 dark:text-zinc-300 underline-offset-2 transition-colors hover:text-zinc-900 dark:hover:text-zinc-100 hover:underline disabled:opacity-50"
           >
             {buying ? "Opening checkout…" : "Buy 500 credits — $9"}
           </button>
@@ -197,14 +197,14 @@ export function UploadTool({
             <button
               onClick={generate}
               disabled={loading || outOfCredits}
-              className="px-4 py-2 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium transition-colors hover:bg-zinc-700 dark:hover:bg-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 dark:disabled:hover:bg-zinc-100"
             >
               {loading ? "Generating…" : "Generate alt text"}
             </button>
             <button
               onClick={reset}
               disabled={loading}
-              className="px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 font-medium disabled:opacity-50"
+              className="px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 font-medium transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50"
             >
               Choose different image
             </button>
@@ -230,14 +230,14 @@ export function UploadTool({
           <div className="mt-4 flex items-center gap-3 text-sm">
             <button
               onClick={copy}
-              className="px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              className="px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
             >
               {copied ? "Copied ✓" : "Copy"}
             </button>
             <button
               onClick={generate}
               disabled={loading || outOfCredits}
-              className="px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50"
+              className="px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50"
             >
               Regenerate
             </button>
