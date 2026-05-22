@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { captureEvent } from "./posthog-provider";
 
 const MAX_BYTES = 4 * 1024 * 1024;
 
@@ -78,8 +79,16 @@ export function UploadTool({
         setDaily(data.credits.daily);
         setPaid(data.credits.paid);
       }
+      captureEvent("alt_text_generated", {
+        chars: data.altText?.length ?? 0,
+        file_type: file.type,
+        used_paid_credit: daily <= 0,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed");
+      captureEvent("alt_text_generation_failed", {
+        message: e instanceof Error ? e.message : "unknown",
+      });
     } finally {
       setLoading(false);
     }
@@ -99,6 +108,7 @@ export function UploadTool({
   async function buyCredits() {
     setBuying(true);
     setError(null);
+    captureEvent("checkout_started");
     try {
       const res = await fetch("/api/checkout", { method: "POST" });
       const data = await res.json();
