@@ -34,17 +34,12 @@ export async function POST(req: NextRequest) {
 
   let event: PolarEvent;
   try {
-    let cleaned = secret.trim();
-    // Polar emits secrets with the polar_whs_ prefix; standardwebhooks
-    // only strips its own whsec_ prefix. Normalise here.
-    for (const p of ["polar_whsec_", "polar_whs_", "whsec_"]) {
-      if (cleaned.startsWith(p)) {
-        cleaned = cleaned.slice(p.length);
-        break;
-      }
-    }
-    const keyBytes = new Uint8Array(Buffer.from(cleaned, "base64"));
-    const wh = new Webhook(keyBytes, { format: "raw" });
+    // Polar uses the raw secret string as HMAC key bytes (verified against
+    // @polar-sh/sdk's validateEvent helper). The standardwebhooks library's
+    // Webhook constructor expects a base64-encoded secret which it decodes
+    // back, so we double-wrap: utf-8 secret -> base64 string -> Webhook.
+    const base64Secret = Buffer.from(secret.trim(), "utf-8").toString("base64");
+    const wh = new Webhook(base64Secret);
     event = wh.verify(body, headers) as PolarEvent;
   } catch (err) {
     if (err instanceof WebhookVerificationError) {
