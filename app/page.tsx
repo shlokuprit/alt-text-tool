@@ -6,7 +6,7 @@ import { UploadTool } from "./upload-tool";
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ auth_error?: string }>;
+  searchParams: Promise<{ auth_error?: string; payment?: string }>;
 }) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -15,11 +15,14 @@ export default async function Home({
 
   const params = await searchParams;
   const authError = params.auth_error;
+  const paymentSuccess = params.payment === "success";
 
-  let credits = 0;
+  let daily = 0;
+  let paid = 0;
   if (user) {
     const state = await getOrInitCredits(user.id);
-    credits = state.credits_remaining;
+    daily = state.daily;
+    paid = state.paid;
   }
 
   return (
@@ -66,7 +69,11 @@ export default async function Home({
             </p>
           </div>
         ) : (
-          <UploadTool initialCredits={credits} />
+          <UploadTool
+            initialDaily={daily}
+            initialPaid={paid}
+            showPaymentSuccess={paymentSuccess}
+          />
         )}
 
         <footer className="mt-16 text-center text-xs text-zinc-500">

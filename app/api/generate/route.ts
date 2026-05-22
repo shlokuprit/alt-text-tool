@@ -28,11 +28,11 @@ export async function POST(req: NextRequest) {
     }
 
     const state = await getOrInitCredits(user.id);
-    if (state.credits_remaining <= 0) {
+    if (state.daily + state.paid <= 0) {
       return NextResponse.json(
         {
-          error: "Daily free limit reached. Credits refill at 00:00 UTC.",
-          creditsRemaining: 0,
+          error: "No credits. Free credits refill at 00:00 UTC, or buy more.",
+          credits: state,
         },
         { status: 429 },
       );
@@ -60,8 +60,8 @@ export async function POST(req: NextRequest) {
     const base64 = buf.toString("base64");
     const altText = await generateAltText(base64, file.type);
 
-    const creditsRemaining = await decrementCredits(user.id);
-    return NextResponse.json({ altText, creditsRemaining });
+    const credits = await decrementCredits(user.id);
+    return NextResponse.json({ altText, credits });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Generation failed";
     console.error("generate error:", err);

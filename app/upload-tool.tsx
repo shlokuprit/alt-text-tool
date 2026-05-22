@@ -5,17 +5,26 @@ import { useEffect, useRef, useState } from "react";
 const MAX_BYTES = 4 * 1024 * 1024;
 
 type Props = {
-  initialCredits: number;
+  initialDaily: number;
+  initialPaid: number;
+  showPaymentSuccess: boolean;
 };
 
-export function UploadTool({ initialCredits }: Props) {
-  const [credits, setCredits] = useState(initialCredits);
+export function UploadTool({
+  initialDaily,
+  initialPaid,
+  showPaymentSuccess,
+}: Props) {
+  const [daily, setDaily] = useState(initialDaily);
+  const [paid, setPaid] = useState(initialPaid);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [altText, setAltText] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [buying, setBuying] = useState(false);
+  const [successBanner, setSuccessBanner] = useState(showPaymentSuccess);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -65,8 +74,9 @@ export function UploadTool({ initialCredits }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
       setAltText(data.altText);
-      if (typeof data.creditsRemaining === "number") {
-        setCredits(data.creditsRemaining);
+      if (data.credits) {
+        setDaily(data.credits.daily);
+        setPaid(data.credits.paid);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed");
@@ -86,15 +96,56 @@ export function UploadTool({ initialCredits }: Props) {
     }
   }
 
-  const outOfCredits = credits <= 0;
+  async function buyCredits() {
+    setBuying(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/checkout", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "Checkout failed");
+      window.location.href = data.url;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Checkout failed");
+      setBuying(false);
+    }
+  }
+
+  const totalCredits = daily + paid;
+  const outOfCredits = totalCredits <= 0;
 
   return (
     <>
-      <div className="mb-6 flex items-center justify-between rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm">
-        <span className="text-zinc-600 dark:text-zinc-400">
-          Free credits remaining today
-        </span>
-        <span className="font-mono font-semibold">{credits} / 3</span>
+      {successBanner && (
+        <div className="mb-6 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 px-4 py-3 text-sm flex items-center justify-between gap-3">
+          <span>
+            Payment received. Your credits should appear within ~30 seconds.
+          </span>
+          <button
+            onClick={() => setSuccessBanner(false)}
+            className="text-emerald-700 dark:text-emerald-300 hover:underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      <div className="mb-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-zinc-600 dark:text-zinc-400">Credits</span>
+          <span className="font-mono font-semibold">
+            {totalCredits} total
+          </span>
+        </div>
+        <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
+          <span>{daily} free today · {paid} paid</span>
+          <button
+            onClick={buyCredits}
+            disabled={buying}
+            className="text-zinc-700 dark:text-zinc-300 hover:underline disabled:opacity-50"
+          >
+            {buying ? "Opening checkout…" : "Buy 500 credits — $9"}
+          </button>
+        </div>
       </div>
 
       {!file && (
@@ -103,11 +154,13 @@ export function UploadTool({ initialCredits }: Props) {
           className={`flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-6 py-16 ${outOfCredits ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-500"} transition-colors`}
         >
           <span className="text-base font-medium">
-            {outOfCredits ? "Daily limit reached" : "Click to choose an image"}
+            {outOfCredits
+              ? "No credits — buy more to keep going"
+              : "Click to choose an image"}
           </span>
           <span className="text-sm text-zinc-500">
             {outOfCredits
-              ? "Comes back tomorrow at 00:00 UTC."
+              ? "Free credits refill at 00:00 UTC."
               : "JPG, PNG, WebP, GIF, HEIC · up to 4MB"}
           </span>
           <input
