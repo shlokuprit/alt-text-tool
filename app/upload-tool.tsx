@@ -296,20 +296,17 @@ export function UploadTool({
 
       <div className="mb-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm">
         <div className="flex items-center justify-between">
-          <span className="text-zinc-600 dark:text-zinc-400">Credits</span>
-          <span className="font-mono font-semibold">{totalCredits} total</span>
+          <span className="text-zinc-600 dark:text-zinc-400">Credits today</span>
+          <span className="font-mono font-semibold">{totalCredits} / 3</span>
         </div>
         <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
-          <span>
-            {daily} free today &middot; {paid} paid
-          </span>
-          <button
-            onClick={buyCredits}
-            disabled={buying}
-            className="text-zinc-700 dark:text-zinc-300 underline-offset-2 transition-colors hover:text-zinc-900 dark:hover:text-zinc-100 hover:underline disabled:opacity-50"
+          <span>Resets at 00:00 UTC</span>
+          <a
+            href="mailto:shlokuprit@gmail.com?subject=Alt-text%20bulk%20plan%20waitlist&body=Hey%20%E2%80%94%20add%20me%20to%20the%20waitlist%20for%20the%20paid%20bulk%20plan.%20I%27d%20use%20it%20for%3A%0A%0A"
+            className="text-zinc-700 dark:text-zinc-300 underline-offset-2 transition-colors hover:text-zinc-900 dark:hover:text-zinc-100 hover:underline"
           >
-            {buying ? "Opening checkout…" : "Buy 500 credits — $9"}
-          </button>
+            Need more? Join waitlist
+          </a>
         </div>
       </div>
 
