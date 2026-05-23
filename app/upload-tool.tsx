@@ -301,12 +301,15 @@ export function UploadTool({
         </div>
         <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
           <span>Resets at 00:00 UTC</span>
-          <a
-            href="mailto:shlokuprit@gmail.com?subject=Alt-text%20bulk%20plan%20waitlist&body=Hey%20%E2%80%94%20add%20me%20to%20the%20waitlist%20for%20the%20paid%20bulk%20plan.%20I%27d%20use%20it%20for%3A%0A%0A"
-            className="text-zinc-700 dark:text-zinc-300 underline-offset-2 transition-colors hover:text-zinc-900 dark:hover:text-zinc-100 hover:underline"
-          >
-            Need more? Join waitlist
-          </a>
+          <span>
+            Need more?{" "}
+            <a
+              href="mailto:shlokuprit@gmail.com?subject=Alt-text%20bulk%20plan%20waitlist&body=Hey%20%E2%80%94%20add%20me%20to%20the%20waitlist%20for%20the%20paid%20bulk%20plan.%20I%27d%20use%20it%20for%3A%0A%0A"
+              className="text-zinc-700 dark:text-zinc-300 underline underline-offset-2 transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
+            >
+              shlokuprit@gmail.com
+            </a>
+          </span>
         </div>
       </div>
 
