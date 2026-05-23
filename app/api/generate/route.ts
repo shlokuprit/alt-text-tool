@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateAltText } from "@/lib/gemini";
+import { generateAltText } from "@/lib/vision";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { decrementCredits, getOrInitCredits } from "@/lib/credits";
 
@@ -58,13 +58,17 @@ export async function POST(req: NextRequest) {
 
     const buf = Buffer.from(await file.arrayBuffer());
     const base64 = buf.toString("base64");
-    const altText = await generateAltText(base64, file.type);
+    const { altText, provider } = await generateAltText(base64, file.type);
 
     const credits = await decrementCredits(user.id);
-    return NextResponse.json({ altText, credits });
+    return NextResponse.json({ altText, credits, provider });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Generation failed";
-    console.error("generate error:", err);
+    console.error("generate error:", {
+      message,
+      name: err instanceof Error ? err.name : undefined,
+      stack: err instanceof Error ? err.stack?.slice(0, 500) : undefined,
+    });
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

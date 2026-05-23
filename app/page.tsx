@@ -123,7 +123,7 @@ export default async function Home({
               >
                 @shlokuprit
               </a>{" "}
-              &middot; Powered by Gemini 2.5 Flash
+              &middot; Powered by Gemini 2.0 Flash
             </p>
             <nav className="flex gap-4">
               <a
